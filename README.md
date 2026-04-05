@@ -51,6 +51,35 @@ knowledge/
   - [x] 文本摘要处理器
   - [x] 知识库目录结构
   - [x] 测试手动采集流程
-- [ ] Phase 2: 自动采集 + 知识图谱
+- [x] Phase 2: 自动采集 + 知识图谱
+  - [x] 网页爬虫模块
+  - [x] RSS 订阅模块
+  - [x] 知识图谱存储
+  - [x] 链接分析器
+  - [x] 采集服务脚本
+  - [x] 集成测试
 - [ ] Phase 3: 语义检索 + RAG 问答
 - [ ] Phase 4: Agent 深度集成
+
+## Phase 2 功能
+
+### 网页爬虫
+
+```bash
+# 爬取网页
+python scripts/run_collector.py scrape --url "https://example.com/article"
+```
+
+### RSS 订阅
+
+```bash
+# 获取 RSS 条目
+python scripts/run_collector.py rss --url "https://example.com/feed" --limit 10
+```
+
+### 知识图谱
+
+自动建立内容关联，支持：
+- 相关笔记推荐
+- 双向链接
+- 图谱浏览
