@@ -3,15 +3,48 @@
 # Alibaba Cloud Bailian
 bailian:
   api_key: "${BAILOU_API_KEY}"  # Set via environment
-  base_url: "https://dashscope.aliyuncs.com/api/v1"
+  # Anthropic 兼容端点 (coding plan)
+  base_url: "https://coding.dashscope.aliyuncs.com/apps/anthropic/v1"
 
-  # Model routing
+  # 可用模型列表 (阿里云百炼 coding plan 实际支持的模型)
+  available_models:
+    - name: "qwen3.5-plus"
+      description: "通义千问 3.5 Plus，平衡性能和成本"
+      max_context: 32768
+    - name: "qwen3-max-2026-01-23"
+      description: "通义千问 3 Max，最强性能版本"
+      max_context: 32768
+    - name: "qwen3-coder-next"
+      description: "通义千问 3 Coder Next，专注代码生成"
+      max_context: 32768
+    - name: "qwen3-coder-plus"
+      description: "通义千问 3 Coder Plus，代码增强版"
+      max_context: 32768
+    - name: "glm-5"
+      description: "智谱 GLM-5，新一代多模态模型"
+      max_context: 128000
+    - name: "glm-4.7"
+      description: "智谱 GLM-4.7，高性能版本"
+      max_context: 128000
+    - name: "kimi-k2.5"
+      description: "Kimi K2.5，长文本处理专家"
+      max_context: 128000
+    - name: "MiniMax-M2.5"
+      description: "MiniMax M2.5，名梦新一代模型"
+      max_context: 245760
+
+  # 模型路由配置 - 为每个任务类型指定模型
+  # 可以通过修改这里的配置来切换使用的模型
   models:
-    text_summary: "qwen-max"
-    text_classification: "qwen-turbo"
-    text_embedding: "text-embedding-v2"
-    multimodal: "qwen-vl-max"
-    rag_qa: "qwen-max"
+    text_summary: "qwen3.5-plus"           # 文本摘要（默认，性价比高）
+    text_classification: "qwen3.5-plus"    # 文本分类
+    text_embedding: "text-embedding-v2"    # 向量嵌入 (使用百炼原生 API)
+    multimodal: "qwen3.5-plus"             # 多模态理解
+    rag_qa: "qwen3.5-plus"                 # RAG 问答
+    code_generation: "qwen3-coder-next"    # 代码生成
+    long_text_analysis: "kimi-k2.5"        # 长文本分析
+    complex_reasoning: "qwen3-max-2026-01-23"  # 复杂推理（最强模型）
+    fast_response: "glm-4.7"               # 快速响应
 
 # Knowledge base paths
 paths:

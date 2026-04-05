@@ -63,8 +63,24 @@ class Config:
 
     @property
     def models(self) -> dict[str, str]:
-        """Get model configuration."""
+        """Get model routing configuration."""
         return self.settings.get("bailian", {}).get("models", {})
+
+    @property
+    def available_models(self) -> list[dict]:
+        """Get list of available models."""
+        return self.settings.get("bailian", {}).get("available_models", [])
+
+    def list_models(self) -> list[str]:
+        """Get list of available model names."""
+        return [m["name"] for m in self.available_models]
+
+    def get_model_info(self, model_name: str) -> dict | None:
+        """Get information about a specific model."""
+        for model in self.available_models:
+            if model["name"] == model_name:
+                return model
+        return None
 
     @property
     def paths(self) -> dict[str, str]:
