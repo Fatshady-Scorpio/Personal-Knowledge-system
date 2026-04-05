@@ -98,29 +98,35 @@ python scripts/run_collector.py rss --url "https://example.com/feed" --limit 10
 
 ## Phase 3 功能
 
-### 语义搜索
+### 语义搜索（本地混合检索）
 
 ```bash
-# 构建索引
-python scripts/build_index.py
+# 安装 Ollama（首次使用）
+bash scripts/setup_ollama.sh
 
-# 搜索内容
+# 搜索内容（默认混合检索：BM25 0.7 + 语义 0.3）
 python scripts/query.py "人工智能的最新进展"
+
+# 仅使用 BM25
+python scripts/query.py "人工智能" --bm25-only
+
+# 调整权重
+python scripts/query.py "人工智能" --bm25-weight 0.5 --semantic-weight 0.5
 ```
 
 ### RAG 问答
 
 ```bash
-# 问答模式
+# 问答模式（使用本地检索 + 云端 LLM）
 python scripts/query.py --qa "什么是深度学习？"
 ```
 
 ### 功能特点
 
-- **向量嵌入**: 使用阿里云百炼 text-embedding-v2
-- **相似度搜索**: FAISS 高效索引
-- **智能问答**: 基于检索结果生成答案
-- **资料来源**: 自动引用来源
+- **混合检索**: BM25 关键词匹配 (70%) + Ollama 语义相似度 (30%)
+- **完全本地**: 向量生成使用本地 Ollama，无需云端 API
+- **可调权重**: 根据实际效果调整 BM25/语义比例
+- **智能排序**: 综合两种检索方式的优势
 
 ## Phase 4 功能
 
