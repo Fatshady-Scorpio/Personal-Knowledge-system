@@ -10,6 +10,7 @@ class Embedder:
     def __init__(self, api_key: str, model: str = "text-embedding-v2"):
         self.api_key = api_key
         self.model = model
+        # Use standard Bailian embedding API
         self.base_url = "https://dashscope.aliyuncs.com/api/v1/services/embeddings/text-embedding/generation"
         self.session = requests.Session()
         self.session.headers.update({
@@ -40,7 +41,8 @@ class Embedder:
                 return embeddings[0].get("embedding", [])
         else:
             error = result.get("error", {})
-            raise RuntimeError(f"API error: {error.get('code')} - {error.get('message')}")
+            error_msg = f"{error.get('code', 'Unknown')}: {error.get('message', 'Unknown error')}" if error else "Unknown error"
+            raise RuntimeError(f"API error: {error_msg}")
 
         return []
 
@@ -70,5 +72,9 @@ class Embedder:
                 embeddings = result.get("output", {}).get("embeddings", [])
                 for emb in embeddings:
                     all_embeddings.append(emb.get("embedding", []))
+            else:
+                error = result.get("error", {})
+                error_msg = f"{error.get('code', 'Unknown')}: {error.get('message', 'Unknown error')}" if error else "Unknown error"
+                raise RuntimeError(f"API error: {error_msg}")
 
         return all_embeddings
