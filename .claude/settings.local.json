@@ -56,7 +56,15 @@
       "Bash(curl -v -X POST https://coding.dashscope.aliyuncs.com/apps/anthropic/v1/chat/completions -H 'Authorization: Bearer sk-sp-d07bbcc369dc40f7a9f9351b25b93398' -H 'Content-Type: application/json' -d '{\"model\": \"qwen3.5-plus\", \"messages\": [{\"role\": \"user\", \"content\": \"你好，请回复测试成功\"}]}')",
       "Bash(curl -v -X POST https://coding.dashscope.aliyuncs.com/apps/anthropic/v1/messages -H 'Authorization: Bearer sk-sp-d07bbcc369dc40f7a9f9351b25b93398' -H 'Content-Type: application/json' -H 'anthropic-version: 2023-06-01' -d '{\"model\": \"qwen3.5-plus\", \"messages\": [{\"role\": \"user\", \"content\": \"你好\"}], \"max_tokens\": 10}')",
       "Bash(curl -X POST https://coding.dashscope.aliyuncs.com/apps/anthropic/v1/messages -H 'Authorization: Bearer sk-sp-d07bbcc369dc40f7a9f9351b25b93398' -H 'Content-Type: application/json' -H 'anthropic-version: 2023-06-01' -d '{\"model\": \"qwen3.5-plus\", \"messages\": [{\"role\": \"user\", \"content\": \"你好，请回复测试成功\"}], \"max_tokens\": 10}')",
-      "WebFetch(domain:bailian.console.aliyun.com)"
+      "WebFetch(domain:bailian.console.aliyun.com)",
+      "Bash(python scripts/setup.py)",
+      "Bash(cd /Users/samcao/Documents/trae_projects/Personal Knowledge system/.worktrees/phase2)",
+      "Bash(python -m pytest tests/test_web_scraper.py -v)",
+      "Bash(python3 -m pip list)",
+      "Bash(chmod +x \"/Users/samcao/Documents/trae_projects/Personal Knowledge System/.worktrees/phase2/scripts/run_collector.py\")",
+      "Bash(python3 -m py_compile scripts/run_collector.py)",
+      "Bash(python -m pytest tests/test_phase2_integration.py -v --tb=short)",
+      "Bash(python -m pytest tests/test_phase2_integration.py -v)"
     ]
   }
 }
