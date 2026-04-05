@@ -6,11 +6,22 @@ domestic:
     - name: "机器之心"
       url: "https://www.jiqizhixin.com"
       category: "AI"
+      scrape_selector: ".article-content"
     - name: "量子位"
       url: "https://www.qbitai.com"
       category: "AI"
+      scrape_selector: ".article-body"
     - name: "AI 科技评论"
       url: "https://aitechtalk.com"
+      category: "AI"
+      scrape_selector: ".article-content"
+
+  rss_feeds:
+    - name: "机器之心 RSS"
+      url: "https://www.jiqizhixin.com/rss"
+      category: "AI"
+    - name: "量子位 RSS"
+      url: "https://www.qbitai.com/feed"
       category: "AI"
 
   video_channels:
@@ -24,11 +35,22 @@ international:
     - name: "Hacker News AI"
       url: "https://news.ycombinator.com/front?query=AI"
       category: "AI"
+      scrape_selector: ".athing"
     - name: "arXiv cs.AI"
       url: "https://arxiv.org/list/cs.AI/recent"
       category: "AI"
+      scrape_selector: ".list-content"
     - name: "Towards Data Science"
       url: "https://towardsdatascience.com"
+      category: "AI"
+      scrape_selector: "article"
+
+  rss_feeds:
+    - name: "Hacker News"
+      url: "https://news.ycombinator.com/rss"
+      category: "AI"
+    - name: "arXiv cs.AI"
+      url: "https://arxiv.org/rss/cs.AI"
       category: "AI"
 
   video_channels:
@@ -36,5 +58,7 @@ international:
       platform: "youtube"
       category: "AI"
 
-# RSS feeds (to be added)
-rss_feeds: []
+# User custom sources
+custom:
+  websites: []
+  rss_feeds: []
