@@ -1,0 +1,48 @@
+# User Interests Configuration
+
+# Customize what content gets prioritized
+
+# Keywords you're interested in (articles with these get higher priority)
+interests:
+  keywords:
+    - LLM
+    - Transformer
+    - RAG
+    - 微调
+    - Fine-tuning
+    - 推理优化
+    - Inference
+    - Agent
+    - 多模态
+    - Multimodal
+    - 强化学习
+    - Reinforcement Learning
+    - 大模型
+    - 语言模型
+    - 知识蒸馏
+    - 模型压缩
+
+# Keywords to ignore (ads, promotions, etc.)
+ignore_keywords:
+  - 广告
+  - 推广
+  - 赞助
+  - 招聘
+  - 课程推荐
+
+# High priority sources (always process these)
+high_priority_sources:
+  - 机器之心 RSS
+  - 量子位 RSS
+  - arXiv cs.AI
+  - arXiv cs.LG
+  - Sebastian Raschka
+  - Jay Alammar
+
+# Topics to organize content into
+topics:
+  - LLM
+  - 多模态
+  - 强化学习
+  - Agent
+  - 推理优化

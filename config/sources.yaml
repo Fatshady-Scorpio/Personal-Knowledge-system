@@ -20,14 +20,15 @@ domestic:
     - name: "机器之心 RSS"
       url: "https://www.jiqizhixin.com/rss"
       category: "AI"
+      priority: high
     - name: "量子位 RSS"
       url: "https://www.qbitai.com/feed"
       category: "AI"
-
-  video_channels:
-    - name: "B 站 AI 频道"
-      platform: "bilibili"
+      priority: high
+    - name: "机器之心论文"
+      url: "https://www.jiqizhixin.com/paper/rss"
       category: "AI"
+      priority: medium
 
 # International sources
 international:
@@ -49,16 +50,40 @@ international:
     - name: "Hacker News"
       url: "https://news.ycombinator.com/rss"
       category: "AI"
+      priority: medium
     - name: "arXiv cs.AI"
       url: "https://arxiv.org/rss/cs.AI"
       category: "AI"
+      priority: high
+    - name: "arXiv cs.LG"
+      url: "https://arxiv.org/rss/cs.LG"
+      category: "AI"
+      priority: high
+    - name: "arXiv cs.CL"
+      url: "https://arxiv.org/rss/cs.CL"
+      category: "AI"
+      priority: medium
+    - name: "Sebastian Raschka"
+      url: "https://sebastianraschka.com/rss.xml"
+      category: "AI"
+      priority: high
+    - name: "Jay Alammar"
+      url: "https://jalammar.github.io/feed.xml"
+      category: "AI"
+      priority: high
 
   video_channels:
     - name: "YouTube AI Channels"
       platform: "youtube"
       category: "AI"
 
-# User custom sources
+# User custom sources (add your own here)
 custom:
   websites: []
   rss_feeds: []
+  # Examples:
+  # rss_feeds:
+  #   - name: "My Favorite Blog"
+  #     url: "https://example.com/feed.xml"
+  #     category: "AI"
+  #     priority: high

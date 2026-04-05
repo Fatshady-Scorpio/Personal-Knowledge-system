@@ -70,7 +70,9 @@
       "Bash(git merge:*)",
       "Bash(python -m pytest tests/ -v --tb=short)",
       "Bash(git checkout:*)",
-      "Bash(python -c \"from src.retriever.bm25_search import BM25Search; print\\('BM25 import OK'\\)\")"
+      "Bash(python -c \"from src.retriever.bm25_search import BM25Search; print\\('BM25 import OK'\\)\")",
+      "Bash(python scripts/query.py \"测试\" --bm25-only)",
+      "Bash(PYTHONPATH=. python scripts/query.py \"测试\" --bm25-only)"
     ]
   }
 }
