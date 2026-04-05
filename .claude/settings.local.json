@@ -8,7 +8,9 @@
       "Bash(git config:*)",
       "Read(//Users/samcao/.ssh/**)",
       "Bash(ssh-keygen -t:*)",
-      "Bash(ssh -T git@github.com)"
+      "Bash(ssh -T git@github.com)",
+      "Read(//Users/samcao/.config/gh/**)",
+      "Bash(curl -X POST -H \"Authorization: token $\\(cat ~/.config/gh/hosts.yml)"
     ]
   }
 }
