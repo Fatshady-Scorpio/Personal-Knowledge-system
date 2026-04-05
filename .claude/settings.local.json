@@ -65,7 +65,9 @@
       "Bash(python3 -m py_compile scripts/run_collector.py)",
       "Bash(python -m pytest tests/test_phase2_integration.py -v --tb=short)",
       "Bash(python -m pytest tests/test_phase2_integration.py -v)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(git rm:*)",
+      "Bash(git merge:*)"
     ]
   }
 }

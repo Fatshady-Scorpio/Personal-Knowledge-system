@@ -65,7 +65,13 @@ knowledge/
   - [x] RAG 问答
   - [x] 命令行工具
   - [x] 集成测试
-- [ ] Phase 4: Agent 深度集成
+- [x] Phase 4: Agent 深度集成
+  - [x] 知识 API 服务
+  - [x] 上下文注入器
+  - [x] 任务委托模块
+  - [x] FastAPI 服务器
+  - [x] Claude 上下文加载
+  - [x] 集成测试
 
 ## Phase 2 功能
 
@@ -115,3 +121,45 @@ python scripts/query.py --qa "什么是深度学习？"
 - **相似度搜索**: FAISS 高效索引
 - **智能问答**: 基于检索结果生成答案
 - **资料来源**: 自动引用来源
+
+## Phase 4 功能
+
+### 启动 API 服务
+
+```bash
+# 启动服务器
+python scripts/run_server.py --port 8000 --reload
+
+# 访问 API 文档
+open http://localhost:8000/docs
+```
+
+### API 端点
+
+| 端点 | 功能 |
+|------|------|
+| `POST /api/v1/search` | 语义搜索 |
+| `POST /api/v1/qa` | RAG 问答 |
+| `POST /api/v1/context/get` | 获取上下文 |
+| `POST /api/v1/delegate/scrape` | 委托爬取任务 |
+| `POST /api/v1/delegate/research` | 委托研究任务 |
+
+### Claude 上下文加载
+
+```bash
+# 获取主题上下文
+python scripts/claude_context.py "机器学习"
+
+# 保存上下文供后续使用
+python scripts/claude_context.py "深度学习" --save --session dl
+
+# 加载已保存的上下文
+python scripts/claude_context.py --load --session dl
+```
+
+### 能力列表
+
+- **知识 API**: 外部系统可通过 REST API 访问知识库
+- **上下文注入**: Claude 会话自动加载相关知识上下文
+- **任务委托**: 将复杂任务委托给系统处理
+- **长期记忆**: 知识库作为 Agent 的持久化记忆
