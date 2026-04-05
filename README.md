@@ -72,6 +72,48 @@ knowledge/
   - [x] FastAPI 服务器
   - [x] Claude 上下文加载
   - [x] 集成测试
+- [x] Phase 5: 自动化系统
+  - [x] 定时任务调度器
+  - [x] 每日简报生成器
+  - [x] 优先级过滤器
+  - [x] 用户兴趣配置
+  - [x] 预配置内容源
+
+## Phase 5: 自动化系统（新增）
+
+### 启动自动调度器
+
+```bash
+# 首次运行（手动触发一次）
+python scripts/start_scheduler.py --run-once
+
+# 启动后台调度服务
+python scripts/start_scheduler.py
+
+# macOS 开机自启
+cp deploy/com.personal.kb.plist ~/Library/LaunchAgents/
+launchctl load ~/Library/LaunchAgents/com.personal.kb.plist
+```
+
+### 配置文件
+
+- `config/schedule.yaml` - 定时任务配置
+- `config/user_interests.yaml` - 你的兴趣关键词
+- `config/sources.yaml` - RSS 订阅源
+
+### 每日简报
+
+系统每天 9:00 自动生成简报，保存在：
+```
+knowledge/50-Outputs/daily_briefing_YYYY-MM-DD.md
+```
+
+### 优先级过滤
+
+系统自动过滤低优先级内容，只处理你感兴趣的文章：
+- 高优先级源（机器之心、arXiv 等）自动处理
+- 包含兴趣关键词（LLM、RAG 等）的文章优先
+- 自动忽略广告、推广内容
 
 ## Phase 2 功能
 
