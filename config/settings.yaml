@@ -98,9 +98,9 @@ retriever:
 
   # Local mode settings (Phase 3b) - BM25 + Ollama
   local:
-    enabled: false  # Set to true to use local mode instead of cloud
-    bm25_weight: 0.5
-    semantic_weight: 0.5
+    enabled: true  # Default to local mode
+    bm25_weight: 0.7  # BM25 weight (keyword matching)
+    semantic_weight: 0.3  # Semantic weight (Ollama embeddings)
     ollama_model: "qwen2.5-coder:7b"
     ollama_url: "http://localhost:11434"
     dimension: 1024
