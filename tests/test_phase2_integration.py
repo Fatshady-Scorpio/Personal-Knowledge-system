@@ -25,7 +25,8 @@ class TestPhase2:
     async def test_rss_fetch(self):
         """Test RSS fetching."""
         fetcher = RSSFetcher()
-        entries = await fetcher.fetch("https://httpbin.org/rss", limit=3)
+        # Use a valid RSS feed for testing
+        entries = await fetcher.fetch("https://feeds2.feedburner.com/36kr", limit=3)
 
         assert isinstance(entries, list)
         await fetcher.close()
