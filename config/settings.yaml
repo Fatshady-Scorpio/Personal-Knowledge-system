@@ -1,0 +1,37 @@
+# Personal Knowledge Base Settings
+
+# Alibaba Cloud Bailian
+bailian:
+  api_key: "${BAILOU_API_KEY}"  # Set via environment
+  base_url: "https://dashscope.aliyuncs.com/api/v1"
+
+  # Model routing
+  models:
+    text_summary: "qwen-max"
+    text_classification: "qwen-turbo"
+    text_embedding: "text-embedding-v2"
+    multimodal: "qwen-vl-max"
+    rag_qa: "qwen-max"
+
+# Knowledge base paths
+paths:
+  knowledge_root: "${PWD}/knowledge"
+  inbox: "00-Inbox"
+  raw: "10-Raw"
+  processed: "20-Processed"
+  topics: "30-Topics"
+  maps: "40-Maps"
+  outputs: "50-Outputs"
+  archive: "90-Archive"
+
+# Processing settings
+processing:
+  max_retries: 3
+  timeout_seconds: 60
+  batch_size: 10
+
+# Video settings (Phase 2+)
+video:
+  segment_by: "time"  # or "topic"
+  segment_duration: 300  # seconds
+  keep_original_url: true

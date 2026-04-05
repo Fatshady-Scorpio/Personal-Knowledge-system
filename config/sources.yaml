@@ -1,0 +1,40 @@
+# Data Sources Configuration
+
+# Domestic sources (China)
+domestic:
+  websites:
+    - name: "机器之心"
+      url: "https://www.jiqizhixin.com"
+      category: "AI"
+    - name: "量子位"
+      url: "https://www.qbitai.com"
+      category: "AI"
+    - name: "AI 科技评论"
+      url: "https://aitechtalk.com"
+      category: "AI"
+
+  video_channels:
+    - name: "B 站 AI 频道"
+      platform: "bilibili"
+      category: "AI"
+
+# International sources
+international:
+  websites:
+    - name: "Hacker News AI"
+      url: "https://news.ycombinator.com/front?query=AI"
+      category: "AI"
+    - name: "arXiv cs.AI"
+      url: "https://arxiv.org/list/cs.AI/recent"
+      category: "AI"
+    - name: "Towards Data Science"
+      url: "https://towardsdatascience.com"
+      category: "AI"
+
+  video_channels:
+    - name: "YouTube AI Channels"
+      platform: "youtube"
+      category: "AI"
+
+# RSS feeds (to be added)
+rss_feeds: []
