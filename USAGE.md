@@ -107,7 +107,20 @@ for r in related:
 
 ## Phase 3: 语义检索 + RAG 问答
 
-### 构建索引
+### 方案 A: 本地检索（推荐，无需 API Key）
+
+```bash
+# 安装 Ollama 并下载模型
+bash scripts/setup_ollama.sh
+
+# 构建索引（BM25）
+python scripts/query.py --local "测试查询"
+
+# 使用混合检索（BM25 + 语义）
+python scripts/query.py --hybrid "人工智能"
+```
+
+### 方案 B: 云端检索（需要 Embedding API Key）
 
 ```bash
 # 首次构建索引（会处理 20-Processed 目录下的所有文件）
@@ -120,7 +133,10 @@ python scripts/build_index.py --rebuild
 ### 语义搜索
 
 ```bash
-# 搜索相关内容
+# 搜索相关内容（本地模式）
+python scripts/query.py --local "人工智能的最新进展"
+
+# 搜索相关内容（云端模式）
 python scripts/query.py "人工智能的最新进展"
 
 # 输出示例：
