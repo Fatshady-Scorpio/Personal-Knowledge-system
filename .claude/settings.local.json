@@ -64,7 +64,8 @@
       "Bash(chmod +x \"/Users/samcao/Documents/trae_projects/Personal Knowledge System/.worktrees/phase2/scripts/run_collector.py\")",
       "Bash(python3 -m py_compile scripts/run_collector.py)",
       "Bash(python -m pytest tests/test_phase2_integration.py -v --tb=short)",
-      "Bash(python -m pytest tests/test_phase2_integration.py -v)"
+      "Bash(python -m pytest tests/test_phase2_integration.py -v)",
+      "Bash(git commit:*)"
     ]
   }
 }

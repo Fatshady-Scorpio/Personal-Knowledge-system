@@ -81,3 +81,17 @@ graph:
   db_path: "${PWD}/knowledge/graph.db"
   auto_link: true  # Automatically find related notes
   max_relations: 5  # Max relations per note
+
+# Retriever settings (Phase 3)
+retriever:
+  model: "text-embedding-v2"
+  dimension: 1536  # Embedding dimension
+  index_path: "${PWD}/knowledge/index"
+  top_k: 5  # Default results for search
+  min_score: 0.5  # Minimum similarity score
+
+  # RAG settings
+  rag:
+    model: "qwen3.5-plus"
+    top_k: 5
+    include_sources: true

@@ -58,7 +58,13 @@ knowledge/
   - [x] 链接分析器
   - [x] 采集服务脚本
   - [x] 集成测试
-- [ ] Phase 3: 语义检索 + RAG 问答
+- [x] Phase 3: 语义检索 + RAG 问答
+  - [x] 向量嵌入生成器
+  - [x] FAISS 向量存储
+  - [x] 语义搜索
+  - [x] RAG 问答
+  - [x] 命令行工具
+  - [x] 集成测试
 - [ ] Phase 4: Agent 深度集成
 
 ## Phase 2 功能
@@ -83,3 +89,29 @@ python scripts/run_collector.py rss --url "https://example.com/feed" --limit 10
 - 相关笔记推荐
 - 双向链接
 - 图谱浏览
+
+## Phase 3 功能
+
+### 语义搜索
+
+```bash
+# 构建索引
+python scripts/build_index.py
+
+# 搜索内容
+python scripts/query.py "人工智能的最新进展"
+```
+
+### RAG 问答
+
+```bash
+# 问答模式
+python scripts/query.py --qa "什么是深度学习？"
+```
+
+### 功能特点
+
+- **向量嵌入**: 使用阿里云百炼 text-embedding-v2
+- **相似度搜索**: FAISS 高效索引
+- **智能问答**: 基于检索结果生成答案
+- **资料来源**: 自动引用来源
