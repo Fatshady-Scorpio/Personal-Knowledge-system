@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "Bash(npm install:*)",
+      "Bash(npm run:*)",
+      "Bash(npx openskills:*)",
+      "Bash(git config:*)",
+      "Read(//Users/samcao/.ssh/**)",
+      "Bash(ssh-keygen -t:*)",
+      "Bash(ssh -T git@github.com)"
+    ]
+  }
+}

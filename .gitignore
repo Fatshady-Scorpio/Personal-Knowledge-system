@@ -1,0 +1,30 @@
+# Claude Code
+.claude/settings.local.json
+.claude/history.jsonl
+.claude/sessions/
+.claude/backups/
+
+# Node.js
+node_modules/
+dist/
+build/
+
+# MacOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment
+.env
+.env.local
+.env.*.local
