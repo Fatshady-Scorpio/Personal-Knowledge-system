@@ -68,3 +68,16 @@ video:
   segment_by: "time"  # or "topic"
   segment_duration: 300  # seconds
   keep_original_url: true
+
+# Collector settings (Phase 2)
+collector:
+  timeout_seconds: 30
+  user_agent: "Mozilla/5.0 (compatible; PersonalKB/1.0)"
+  max_retries: 3
+  rss_limit: 10  # Default max entries to fetch
+
+# Knowledge graph settings (Phase 2)
+graph:
+  db_path: "${PWD}/knowledge/graph.db"
+  auto_link: true  # Automatically find related notes
+  max_relations: 5  # Max relations per note
