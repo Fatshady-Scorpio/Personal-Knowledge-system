@@ -19,6 +19,7 @@ build/
 .vscode/
 *.swp
 *.swo
+*~
 
 # Logs
 *.log
@@ -57,21 +58,15 @@ ENV/
 .env.local
 .env.*.local
 
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
-*~
-
 # Obsidian
 .obsidian/
 
-# Logs
-*.log
-logs/
-
-# Knowledge base content (optional - can be gitignored or tracked)
-# knowledge/
-
+# Worktrees
 .worktrees/
+
+# Knowledge data (not tracked in git)
+knowledge/
+knowledge-archive/
+raw/
+wiki/
+outputs/

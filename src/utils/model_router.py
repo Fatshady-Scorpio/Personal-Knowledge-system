@@ -1,22 +1,20 @@
-"""Model routing for Alibaba Cloud Bailian coding plan API.
+"""Model routing for Alibaba Cloud Bailian API.
 
-Supports multiple model providers (Qwen, GLM, Kimi, MiniMax, DeepSeek) via
+Supports multiple models (Qwen, GLM, Kimi, MiniMax) via
 Anthropic-compatible API endpoint.
 """
 
-import asyncio
-import json
+import logging
+import time
 from typing import Any
 
 import requests
 
+logger = logging.getLogger(__name__)
+
 
 class ModelRouter:
-    """Route requests to appropriate models based on task type.
-
-    Uses Anthropic-compatible API endpoint for Alibaba Cloud Bailian coding plan.
-    Supports switching models per task type via configuration.
-    """
+    """Route requests to models via Anthropic-compatible API endpoint."""
 
     def __init__(self, api_key: str, base_url: str = "https://coding.dashscope.aliyuncs.com/apps/anthropic/v1"):
         """Initialize the model router.
@@ -40,20 +38,65 @@ class ModelRouter:
         messages: list[dict],
         max_tokens: int = 1024,
         temperature: float = 0.7,
+        max_retries: int = 5,
+        timeout: int = 120,
+        fallback_model: str = "glm-5",
         **kwargs
     ) -> str:
         """Call any model via Anthropic-compatible API.
 
         Args:
-            model: Model name (e.g., "qwen3.5-plus", "glm-4", "kimi-latest")
+            model: Model name (e.g., "qwen3.6-plus", "glm-5")
             messages: List of message dicts with "role" and "content"
             max_tokens: Maximum tokens in response
             temperature: Sampling temperature (0-1)
+            max_retries: Maximum retry attempts on connection errors
+            timeout: Request timeout in seconds
+            fallback_model: Backup model to use if primary fails
             **kwargs: Additional parameters to pass to API
 
         Returns:
             Model response text
         """
+        try:
+            return self._call_model(
+                model=model,
+                messages=messages,
+                max_tokens=max_tokens,
+                temperature=temperature,
+                max_retries=max_retries,
+                timeout=timeout,
+                **kwargs
+            )
+        except RuntimeError as e:
+            if fallback_model and fallback_model != model:
+                logger.warning(f"Primary model '{model}' failed, falling back to '{fallback_model}'...")
+                try:
+                    return self._call_model(
+                        model=fallback_model,
+                        messages=messages,
+                        max_tokens=max_tokens,
+                        temperature=temperature,
+                        max_retries=max(1, max_retries // 2),
+                        timeout=timeout,
+                        **kwargs
+                    )
+                except RuntimeError:
+                    logger.error(f"Fallback model '{fallback_model}' also failed")
+                    raise
+            raise
+
+    def _call_model(
+        self,
+        model: str,
+        messages: list[dict],
+        max_tokens: int = 1024,
+        temperature: float = 0.7,
+        max_retries: int = 5,
+        timeout: int = 120,
+        **kwargs
+    ) -> str:
+        """Internal model call method (no fallback)."""
         url = f"{self.base_url}/messages"
         data = {
             "model": model,
@@ -63,54 +106,49 @@ class ModelRouter:
             **kwargs
         }
 
-        response = self.session.post(url, json=data)
-        result = response.json()
+        last_error = None
+        for attempt in range(max_retries):
+            try:
+                logger.info(f"API call to {model} (attempt {attempt + 1}/{max_retries}, timeout={timeout}s)")
+                response = self.session.post(url, json=data, timeout=timeout)
+                result = response.json()
 
-        if response.status_code == 200:
-            # Anthropic format: content is an array of blocks
-            content_blocks = result.get("content", [])
-            for block in content_blocks:
-                if block.get("type") == "text":
-                    return block.get("text", "")
-            # Fallback: try to get text from first block
-            if content_blocks:
-                return content_blocks[0].get("text", "")
-            return ""
-        else:
-            error = result.get("error", {})
-            raise RuntimeError(f"API error ({error.get('code')}): {error.get('message')}")
+                if response.status_code == 200:
+                    content_blocks = result.get("content", [])
+                    for block in content_blocks:
+                        if block.get("type") == "text":
+                            return block.get("text", "")
+                    if content_blocks:
+                        return content_blocks[0].get("text", "")
+                    return ""
+                else:
+                    error = result.get("error", {})
+                    raise RuntimeError(f"API error ({error.get('code')}): {error.get('message')}")
 
-    def call_with_model(
-        self,
-        task_type: str,
-        prompt: str,
-        model_override: str | None = None,
-        **kwargs
-    ) -> str:
-        """Call model based on task type with optional override.
+            except requests.exceptions.Timeout as e:
+                last_error = e
+                if attempt < max_retries - 1:
+                    wait_time = 2 ** attempt
+                    logger.warning(f"API timeout (attempt {attempt + 1}/{max_retries}), retrying in {wait_time}s...")
+                    time.sleep(wait_time)
+                else:
+                    logger.error(f"API call failed after {max_retries} retries: timeout")
+                    raise RuntimeError(f"API timeout after {max_retries} retries")
 
-        Args:
-            task_type: Task type for model routing (e.g., "text_summary")
-            prompt: The prompt to send
-            model_override: Override default model for this task type
-            **kwargs: Additional parameters
+            except (requests.exceptions.ConnectionError,
+                    requests.exceptions.ProxyError) as e:
+                last_error = e
+                if attempt < max_retries - 1:
+                    wait_time = 2 ** attempt
+                    logger.warning(f"Connection error (attempt {attempt + 1}/{max_retries}), retrying in {wait_time}s...")
+                    time.sleep(wait_time)
+                else:
+                    logger.error(f"API call failed after {max_retries} retries: {last_error}")
+                    raise RuntimeError(f"Failed after {max_retries} retries: {last_error}")
 
-        Returns:
-            Model response text
-        """
-        from .config import get_config
-        config = get_config()
+        return ""
 
-        # Get model for task type
-        if model_override:
-            model = model_override
-        else:
-            model = config.get_model_for_task(task_type)
-
-        messages = [{"role": "user", "content": prompt}]
-        return self.call(model=model, messages=messages, **kwargs)
-
-    def text_summary(self, text: str, max_length: int = 500, model: str | None = None) -> str:
+    def text_summary(self, text: str, max_length: int = 500, model: str | None = None, timeout: int | None = None) -> str:
         """Generate a summary of the given text."""
         prompt = f"""请为以下内容生成一个简洁的摘要（{max_length}字以内）：
 
@@ -119,113 +157,21 @@ class ModelRouter:
 摘要："""
 
         return self.call(
-            model=model or "qwen3.5-plus",
+            model=model or "qwen3.6-plus",
             messages=[{"role": "user", "content": prompt}],
             max_tokens=max_length,
-            temperature=0.7
+            temperature=0.7,
+            timeout=timeout or 120
         )
-
-    def classify(self, text: str, categories: list[str] | None = None, model: str | None = None) -> dict[str, Any]:
-        """Classify text into categories."""
-        if categories is None:
-            categories = ["AI", "投资", "游戏", "技术", "产品", "其他"]
-
-        prompt = f"""请分析以下内容，将其分类到最合适的类别中，并提取关键词标签。
-
-内容：
-{text}
-
-请按照以下 JSON 格式返回结果：
-{{
-    "category": "类别名称",
-    "tags": ["标签 1", "标签 2", ...],
-    "confidence": 0.0-1.0
-}}
-
-只返回 JSON，不要其他内容。"""
-
-        result = self.call(
-            model=model or "qwen3.5-plus",
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=200,
-            temperature=0.3
-        )
-
-        # Extract JSON from response
-        result = result.strip()
-        if "```json" in result:
-            result = result.split("```json")[1].split("```")[0].strip()
-        return json.loads(result)
-
-    def compare_models(
-        self,
-        prompt: str,
-        models: list[str],
-        **kwargs
-    ) -> dict[str, str]:
-        """Call multiple models with the same prompt and compare results.
-
-        Args:
-            prompt: The prompt to send to all models
-            models: List of model names to test
-            **kwargs: Additional parameters
-
-        Returns:
-            Dict mapping model name to response text
-        """
-        results = {}
-        messages = [{"role": "user", "content": prompt}]
-
-        for model in models:
-            try:
-                results[model] = self.call(model=model, messages=messages, **kwargs)
-            except Exception as e:
-                results[model] = f"Error: {e}"
-
-        return results
 
     def chat(
         self,
         messages: list[dict],
-        model: str = "qwen3.5-plus",
+        model: str = "qwen3.6-plus",
         **kwargs
     ) -> str:
-        """Generic chat interface with any model.
-
-        Args:
-            messages: List of message dicts (can include conversation history)
-            model: Model to use
-            **kwargs: Additional parameters
-
-        Returns:
-            Model response text
-        """
+        """Generic chat interface with any model."""
         return self.call(model=model, messages=messages, **kwargs)
-
-    async def text_summary_async(self, text: str, max_length: int = 500) -> str:
-        """Async version of text_summary."""
-        return await asyncio.to_thread(self.text_summary, text, max_length)
-
-    async def classify_async(self, text: str, categories: list[str] | None = None) -> dict[str, Any]:
-        """Async version of classify."""
-        return await asyncio.to_thread(self.classify, text, categories)
-
-    def multimodal_understanding(
-        self,
-        image_url: str | None = None,
-        text: str = ""
-    ) -> str:
-        """Understand multimodal content (image + text).
-
-        Args:
-            image_url: URL or path to image.
-            text: Additional text context.
-
-        Returns:
-            Description and analysis of the content.
-        """
-        # This will be implemented in Phase 2 for video frames
-        raise NotImplementedError("Multimodal understanding will be implemented in Phase 2")
 
 
 # Global router instance
@@ -233,39 +179,19 @@ _router: ModelRouter | None = None
 
 
 def get_router(api_key: str | None = None, base_url: str | None = None) -> ModelRouter:
-    """Get the global model router instance.
-
-    Args:
-        api_key: Optional override for API key
-        base_url: Optional override for base URL
-
-    Returns:
-        ModelRouter instance
-    """
+    """Get the global model router instance."""
     global _router
     if _router is None or api_key is not None or base_url is not None:
         from .config import get_config
         config = get_config()
         _router = ModelRouter(
             api_key=api_key or config.bailian_api_key,
-            base_url=base_url or config.settings.get("bailian", {}).get("base_url")
+            base_url=base_url or "https://coding.dashscope.aliyuncs.com/apps/anthropic/v1"
         )
     return _router
 
 
-def quick_call(prompt: str, model: str = "qwen3.5-plus") -> str:
-    """Quick one-line model call without managing router instance.
-
-    Args:
-        prompt: The prompt to send
-        model: Model name to use
-
-    Returns:
-        Model response text
-
-    Example:
-        >>> from src.utils.model_router import quick_call
-        >>> response = quick_call("你好", model="qwen3.5-plus")
-    """
+def quick_call(prompt: str, model: str = "qwen3.6-plus") -> str:
+    """Quick one-line model call without managing router instance."""
     router = get_router()
     return router.chat(messages=[{"role": "user", "content": prompt}], model=model)

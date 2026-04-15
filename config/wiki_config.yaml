@@ -1,0 +1,90 @@
+# Agentic Wiki Configuration
+
+## LLM 配置
+
+model:
+  # 默认模型用于编译和查询
+  default: "qwen3.6-plus"
+
+  # 用于健康检查和矛盾检测（需要更强推理能力）
+  analysis: "qwen3.6-plus"
+
+  # 用于索引生成（需要更好的组织能力）
+  indexing: "qwen3.6-plus"
+
+  # 用于概念提取（使用更快的模型提高速度）
+  concept_extraction: "qwen3.6-plus"
+
+  # 用于翻译（使用更快的模型）
+  translation: "qwen3.6-plus"
+
+## Token 预算
+
+context:
+  # 查询时最大 token 预算
+  query_budget: 100000
+
+  # 编译时最大 token 预算
+  compile_budget: 50000
+
+  # 健康检查时最大 token 预算
+  health_budget: 80000
+
+## 编译配置
+
+compilation:
+  # 每次编译提取的概念数量范围
+  min_concepts: 3
+  max_concepts: 8
+
+  # 置信度阈值（低于此值需要人工审核）
+  confidence_threshold: 0.7
+
+  # 是否自动保存 Q&A
+  save_qa_results: true
+
+## 链接配置
+
+links:
+  # 最少连接数，低于此值视为孤岛
+  orphan_threshold: 0
+
+  # 最少引用数，高于此值视为核心枢纽
+  hub_threshold: 5
+
+  # 链接遍历最大深度
+  max_traverse_depth: 2
+
+## 健康检查配置
+
+health_check:
+  # 内容过期天数阈值
+  outdated_days: 90
+
+  # 低置信度阈值
+  low_confidence_threshold: 0.7
+
+  # 是否启用矛盾检测（较慢）
+  enable_contradiction_check: true
+
+  # 矛盾检测最大条目数（避免过多 API 调用）
+  max_contradiction_checks: 20
+
+## 目录路径
+
+paths:
+  raw_dir: "./raw"
+  wiki_dir: "./wiki"
+  outputs_dir: "./outputs"
+
+  raw_articles: "./raw/articles"
+  raw_videos: "./raw/videos"
+  raw_papers: "./raw/papers"
+  raw_notes: "./raw/notes"
+
+  wiki_concepts: "./wiki/concepts"
+  wiki_topics: "./wiki/topics"
+
+  outputs_qa: "./outputs/qa"
+  outputs_analyses: "./outputs/analyses"
+  outputs_briefings: "./outputs/briefings"

@@ -1,0 +1,36 @@
+# Second Brain User Profile
+# 用户偏好和项目上下文配置
+
+preferences:
+  language: zh-CN
+  style: concise  # concise | detailed
+  focus_areas:
+    - AI/ML
+    - Agentic AI
+    - 系统设计
+    - 业务分析
+  tools:
+    - Python
+    - Claude Code
+    - Obsidian
+  response_style: "简洁技术风格，多用代码示例，少废话"
+
+project_context:
+  wiki_path: /Users/samcao/Obsidian/wiki
+  raw_path: /Users/samcao/Obsidian/wiki/raw
+  wiki_stats:
+    concepts: 401
+    topics: 55
+    avg_backlinks: 7.0
+    health_score: 99.2
+  model: qwen3.6-plus
+  api_base: https://coding.dashscope.aliyuncs.com/apps/anthropic/v1
+  api_note: "API 偶尔超时，需重试逻辑"
+  knowledge_sources:
+    - PDF 文档 (25+ 本)
+    - 视频转录 (B站/抖音/YouTube)
+    - Agentic Design Patterns (21 章)
+  recent_additions:
+    - "Agentic Design Patterns 21章 (2026-04-12)"
+
+knowledge_gaps: []  # 自动追踪的知识缺口

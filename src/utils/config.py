@@ -1,4 +1,7 @@
-"""Configuration management for Personal Knowledge Base."""
+"""Configuration management for Personal Knowledge System.
+
+配置管理模块，负责加载 wiki 配置和获取 API 密钥。
+"""
 
 import os
 from pathlib import Path
@@ -9,7 +12,10 @@ from dotenv import load_dotenv
 
 
 class Config:
-    """Load and manage configuration from YAML and environment variables."""
+    """Load and manage configuration from YAML and environment variables.
+
+    从 YAML 文件和环境变量加载并管理配置信息。
+    """
 
     def __init__(self, config_dir: str | None = None):
         """Initialize configuration.
@@ -17,39 +23,23 @@ class Config:
         Args:
             config_dir: Directory containing config files. Defaults to project config/.
         """
-        # Load environment variables
         load_dotenv()
 
-        # Determine config directory
         if config_dir is None:
             project_root = Path(__file__).parent.parent.parent
             config_dir = project_root / "config"
 
         self.config_dir = Path(config_dir)
-        self.settings = self._load_yaml("settings.yaml")
-        self.sources = self._load_yaml("sources.yaml")
-
-        # Expand environment variables in settings
-        self.settings = self._expand_env(self.settings)
+        self.wiki_config = self._load_yaml("wiki_config.yaml")
+        self.user_profile = self._load_yaml("user_profile.yaml")
 
     def _load_yaml(self, filename: str) -> dict[str, Any]:
         """Load a YAML configuration file."""
         filepath = self.config_dir / filename
+        if not filepath.exists():
+            return {}
         with open(filepath, "r", encoding="utf-8") as f:
             return yaml.safe_load(f) or {}
-
-    def _expand_env(self, config: dict[str, Any]) -> dict[str, Any]:
-        """Expand environment variables in configuration values."""
-        result = {}
-        for key, value in config.items():
-            if isinstance(value, dict):
-                result[key] = self._expand_env(value)
-            elif isinstance(value, str):
-                # Expand ${VAR} syntax
-                result[key] = os.path.expandvars(value)
-            else:
-                result[key] = value
-        return result
 
     @property
     def bailian_api_key(self) -> str:
@@ -63,40 +53,35 @@ class Config:
 
     @property
     def models(self) -> dict[str, str]:
-        """Get model routing configuration."""
-        return self.settings.get("bailian", {}).get("models", {})
+        """Get model routing configuration from wiki_config.yaml."""
+        return self.wiki_config.get("model", {}).get("tasks", {})
 
     @property
-    def available_models(self) -> list[dict]:
-        """Get list of available models."""
-        return self.settings.get("bailian", {}).get("available_models", [])
-
-    def list_models(self) -> list[str]:
-        """Get list of available model names."""
-        return [m["name"] for m in self.available_models]
-
-    def get_model_info(self, model_name: str) -> dict | None:
-        """Get information about a specific model."""
-        for model in self.available_models:
-            if model["name"] == model_name:
-                return model
-        return None
+    def default_model(self) -> str:
+        """Get default model name."""
+        return self.wiki_config.get("model", {}).get("default", "qwen3.6-plus")
 
     @property
     def paths(self) -> dict[str, str]:
-        """Get path configuration."""
-        return self.settings.get("paths", {})
+        """Get path configuration from wiki_config."""
+        return self.wiki_config.get("paths", {})
 
     def get_model_for_task(self, task_type: str) -> str:
         """Get the appropriate model for a given task type."""
         models = self.models
-        return models.get(task_type, models.get("text_summary", "qwen-max"))
+        return models.get(task_type, self.default_model)
 
-    def get_knowledge_path(self, category: str) -> Path:
-        """Get the path for a knowledge base category."""
-        root = self.paths.get("knowledge_root", "./knowledge")
-        category_path = self.paths.get(category, category)
-        return Path(root) / category_path
+    def get_context_budget(self, task_type: str = "query") -> int:
+        """Get token budget for a task type."""
+        return self.wiki_config.get("context", {}).get(f"{task_type}_budget", 100000)
+
+    def get_compilation_config(self) -> dict:
+        """Get compilation configuration."""
+        return self.wiki_config.get("compilation", {})
+
+    def get_health_check_config(self) -> dict:
+        """Get health check configuration."""
+        return self.wiki_config.get("health_check", {})
 
 
 # Global config instance
