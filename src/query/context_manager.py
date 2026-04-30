@@ -55,13 +55,20 @@ class ContextManager:
     def load_for_query(self, query: str) -> dict:
         """Load relevant context for a query within token budget.
 
+        Karpathy pattern: LLM reads index.md to navigate, not bulk loading.
+        1. Load full domain index.md for LLM navigation
+        2. Pre-load only entries with exact keyword match in title
+        3. LLM uses index to identify additional entries worth reading
+        4. Traverse bilateral links from pre-loaded entries (depth=1, max=3)
+        5. Token budget prevents overloading
+
         Args:
             query: The user's query
 
         Returns:
             Dictionary with:
-            - index: Relevant index excerpt
-            - entries: Dict of {entry_name: content}
+            - index: Full domain index (LLM navigates from here)
+            - entries: Dict of {entry_name: content} (only exact matches)
             - related: List of related concept names
         """
         self.loaded_entries.clear()
@@ -73,46 +80,44 @@ class ContextManager:
             "related": [],
         }
 
-        # Step 1: Load relevant index section
-        index_content = self._load_index_excerpt(query)
-        if index_content:
+        # Step 1: Load full domain index.md for LLM navigation
+        if self.index_path.exists():
+            index_content = self.index_path.read_text(encoding="utf-8")
             index_tokens = self._count_tokens(index_content)
-            if self.current_tokens + index_tokens <= self.token_budget * 0.2:
+            # Only include index if it fits within 20% of budget
+            if index_tokens <= self.token_budget * 0.2:
                 result["index"] = index_content
                 self.current_tokens += index_tokens
 
-        # Step 2: Extract candidate entry names from index
+        # Step 2: Extract only exact-match candidate entries (narrow pre-filter)
         candidates = self._extract_candidates_from_index(query)
 
-        # Step 3: Load entries by relevance until budget is reached
+        # Step 3: Load only the most relevant entries (token budget)
         for candidate in candidates:
-            if self.current_tokens >= self.token_budget:
-                logger.info(f"Token budget reached ({self.current_tokens}/{self.token_budget})")
+            if self.current_tokens >= self.token_budget * 0.5:
                 break
 
             content = self._load_entry(candidate)
             if content:
                 entry_tokens = self._count_tokens(content)
-
-                # Prefer shorter entries if budget is tight
-                if self.current_tokens + entry_tokens <= self.token_budget:
+                if self.current_tokens + entry_tokens <= self.token_budget * 0.5:
                     result["entries"][candidate] = content
                     result["related"].append(candidate)
                     self.current_tokens += entry_tokens
 
-        # Step 4: Traverse links from loaded entries
+        # Step 4: Traverse bilateral links from loaded entries (limited)
         if result["entries"]:
             related = self._traverse_links(
                 list(result["entries"].keys()),
                 depth=1,
-                max_additional=5,
+                max_additional=3,
             )
             for entry_name in related:
                 if entry_name not in result["entries"]:
                     content = self._load_entry(entry_name)
                     if content:
                         entry_tokens = self._count_tokens(content)
-                        if self.current_tokens + entry_tokens <= self.token_budget:
+                        if self.current_tokens + entry_tokens <= self.token_budget * 0.5:
                             result["entries"][entry_name] = content
                             result["related"].append(entry_name)
                             self.current_tokens += entry_tokens
@@ -124,84 +129,43 @@ class ContextManager:
 
         return result
 
-    def _load_index_excerpt(self, query: str) -> str:
-        """Load relevant excerpt from index.md.
-
-        Uses simple keyword matching to find relevant sections.
-        """
-        if not self.index_path.exists():
-            return ""
-
-        content = self.index_path.read_text(encoding="utf-8")
-
-        # Find sections mentioning query keywords
-        lines = content.split("\n")
-        relevant_lines = []
-        in_relevant_section = False
-        section_depth = 0
-
-        query_keywords = query.lower().split()
-
-        for i, line in enumerate(lines):
-            line_lower = line.lower()
-
-            # Check if line contains query keywords
-            keyword_match = any(kw in line_lower for kw in query_keywords)
-
-            # Track section depth
-            if line.startswith("###"):
-                section_depth = 3
-            elif line.startswith("##"):
-                section_depth = 2
-            elif line.startswith("#"):
-                section_depth = 1
-
-            if keyword_match:
-                in_relevant_section = True
-                section_depth = max(section_depth, 2)
-
-            if in_relevant_section:
-                relevant_lines.append(line)
-
-                # End section at next major heading
-                if line.startswith("##") and not keyword_match and len(relevant_lines) > 5:
-                    in_relevant_section = False
-
-        # Fallback: return first part of index if no match
-        if not relevant_lines:
-            relevant_lines = lines[:50]
-
-        return "\n".join(relevant_lines[:100])  # Limit length
-
     def _extract_candidates_from_index(self, query: str) -> list[str]:
-        """Extract candidate entry names from index based on query.
+        """Extract candidate entry names from index.
+
+        Strategy: Return entries whose title matches query keywords.
+        If no title match, return empty — the LLM navigates via the full
+        index.md loaded in result["index"] without pre-loaded entries.
 
         Returns:
-            List of entry names to consider loading
+            List of entry names to pre-load
         """
-        candidates = []
-
-        # Extract [[wiki links]] from index excerpt
         import re
+
+        if not self.index_path.exists():
+            return self._scan_all_entries()
+
+        content = self.index_path.read_text(encoding="utf-8")
+        query_lower = query.lower()
+
+        # Extract all [[wiki links]] from index
         link_pattern = re.compile(r"\[\[([^\]]+)\]\]")
+        all_links = []
+        for match in link_pattern.findall(content):
+            name = match.split("|")[0].strip() if "|" in match else match.strip()
+            all_links.append(name)
 
-        index_content = self._load_index_excerpt(query)
-        matches = link_pattern.findall(index_content)
+        # Return entries whose title contains query keywords
+        query_words = [w for w in query_lower.split() if len(w) >= 2]
+        matched = [link for link in all_links if any(w in link.lower() for w in query_words)]
+        return matched
 
-        for match in matches:
-            # Handle aliased links [[Target|Alias]]
-            if "|" in match:
-                match = match.split("|")[0]
-            candidates.append(match.strip())
-
-        # Also scan all entries for relevance
-        if len(candidates) < 10:
-            # Fall back to scanning all entries
-            for directory in [self.concepts_dir, self.topics_dir]:
-                if directory.exists():
-                    for md_file in directory.glob("*.md"):
-                        candidates.append(md_file.stem)
-
+    def _scan_all_entries(self) -> list[str]:
+        """Fallback: scan all entry files when index is unavailable."""
+        candidates = []
+        for directory in [self.concepts_dir, self.topics_dir]:
+            if directory.exists():
+                for md_file in directory.glob("*.md"):
+                    candidates.append(md_file.stem)
         return candidates
 
     def _load_entry(self, name: str) -> Optional[str]:

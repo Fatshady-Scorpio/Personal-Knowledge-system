@@ -108,22 +108,30 @@ class AgentQuery:
         # Build prompt with context - Agentic Wiki style (LLM learns then answers)
         context_text = self._format_context(context)
 
-        prompt = f"""你是一个知识助手。请先阅读以下 wiki 知识网络，然后回答问题。
+        prompt = f"""你是一个知识库助手。请先阅读以下 wiki 知识网络，然后回答问题。
 
-## 你已学习的知识（来自 wiki）
+## 知识库导航（index.md — 内容目录）
+
+{context.get('index', '暂无索引')}
+
+## 相关词条内容
 
 {context_text}
+
+## 历史 Q&A 参考
+
+{context.get('qa_history', '暂无相关 Q&A 记录')}
 
 ## 用户问题
 
 {question}
 
-## 回答指南
+## 回答要求
 
-1. **优先使用 wiki 知识**: 如果 wiki 中有相关内容，用它作为回答的核心
-2. **补充通用知识**: 如果 wiki 内容不足，用你的通用知识补充，但要标注
-3. **引用来源**: 提到 wiki 中的概念时，用 [[概念名]] 格式引用
-4. **标注知识边界**: 明确说明哪些来自 wiki，哪些是你的补充
+1. **导航→深入**: 先读索引找到相关主题，再深入词条内容
+2. **优先 wiki 知识**: 用 wiki 内容作为回答核心，标注 [[来源]]
+3. **补充通用知识**: wiki 不足时用通用知识补充，但明确标注"知识库未收录"
+4. **标注知识边界**: 区分哪些来自 wiki，哪些是你的补充
 
 ## 回答格式
 
