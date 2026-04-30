@@ -28,6 +28,7 @@ def main():
     parser.add_argument("question", nargs="?", type=str, help="Your question")
     parser.add_argument("--no-save", action="store_true", help="Don't save Q&A")
     parser.add_argument("--interactive", action="store_true", help="Interactive mode")
+    parser.add_argument("--domain", type=str, default=None, help="Target domain (e.g., ai, product, investment)")
     parser.add_argument("--verbose", action="store_true", help="Verbose output")
     args = parser.parse_args()
 
@@ -40,7 +41,7 @@ def main():
     outputs_dir = root_dir / "outputs" / "qa"
 
     # Initialize query engine
-    agent = AgentQuery(wiki_dir=wiki_dir, outputs_dir=outputs_dir)
+    agent = AgentQuery(wiki_dir=wiki_dir, outputs_dir=outputs_dir, domain=args.domain)
 
     if args.interactive:
         print("🤖 Agentic Wiki - Interactive Query Mode")

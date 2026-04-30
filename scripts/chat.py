@@ -19,6 +19,7 @@ from datetime import datetime
 
 from src.query.agent_query import AgentQuery
 from src.query.context_manager import ContextManager
+from src.domain_manager import DomainManager
 
 logging.basicConfig(
     level=logging.INFO,
@@ -43,6 +44,12 @@ Examples:
         type=str,
         default="qwen3.6-plus",
         help="Model to use (default: qwen3.6-plus)",
+    )
+    parser.add_argument(
+        "--domain",
+        type=str,
+        default=None,
+        help="Default domain (e.g., ai, product, investment)",
     )
     parser.add_argument(
         "--budget",
@@ -76,6 +83,7 @@ Examples:
         outputs_dir=outputs_dir,
         model=args.model,
         token_budget=args.budget,
+        domain=args.domain,
     )
 
     # Print header
@@ -121,12 +129,15 @@ def run_chat_loop(agent: AgentQuery, save: bool = True):
         agent: AgentQuery instance
         save: Whether to save Q&A results
     """
+    dm = DomainManager()
+    current_domain = agent.domain or "auto"
+
     print("💬 请问吧！\n")
 
     while True:
         try:
             # Get user input
-            user_input = input("❓ 你：").strip()
+            user_input = input(f"❓ [{current_domain}] 你：").strip()
 
             if not user_input:
                 continue
@@ -146,6 +157,26 @@ def run_chat_loop(agent: AgentQuery, save: bool = True):
 
             if user_input.lower() == "history":
                 show_history(agent.outputs_dir)
+                continue
+
+            if user_input.startswith("/domain "):
+                domain_id = user_input.split(" ", 1)[1].strip()
+                if domain_id == "auto":
+                    agent.domain = None
+                    current_domain = "auto"
+                    print(f"Domain: auto (automatic routing)\n")
+                elif dm.get_domain(domain_id):
+                    agent.domain = domain_id
+                    agent.context_manager = ContextManager(
+                        wiki_dir=agent.wiki_dir,
+                        token_budget=agent.context_manager.token_budget,
+                        domain=domain_id,
+                    )
+                    current_domain = domain_id
+                    domain = dm.get_domain(domain_id)
+                    print(f"Domain: {domain.name}\n")
+                else:
+                    print(f"Unknown domain: {domain_id}. Available: {[d.id for d in dm.list_domains()]}\n")
                 continue
 
             # Process query
@@ -171,6 +202,7 @@ def print_help():
   help          显示此帮助消息
   stats         显示知识库统计
   history       显示最近的问答历史
+  /domain <id>  切换到指定领域（auto 为自动路由）
   quit/exit/q   退出聊天
 
 使用技巧:
@@ -178,6 +210,7 @@ def print_help():
   2. 可以进行连续追问，系统会记住上下文
   3. 使用 [[词条名]] 格式可以引用特定概念
   4. 复杂主题可以拆分成多个问题逐一询问
+  5. 使用 /domain 命令切换到特定领域以降低 token 消耗
 
 示例问题:
   - "Agentic Wiki 的核心理念是什么？"

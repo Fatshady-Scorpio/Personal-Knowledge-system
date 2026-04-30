@@ -23,11 +23,22 @@ class ContextManager:
         wiki_dir: Path,
         token_budget: int = 100000,
         model: str = "qwen3.6-plus",
+        domain: Optional[str] = None,
     ):
         self.wiki_dir = wiki_dir
-        self.concepts_dir = wiki_dir / "concepts"
-        self.topics_dir = wiki_dir / "topics"
-        self.index_path = wiki_dir / "index.md"
+        self.domain = domain
+
+        if domain:
+            # Domain-scoped: use domain directories
+            self.concepts_dir = wiki_dir / "domains" / domain / "concepts"
+            self.topics_dir = wiki_dir / "domains" / domain / "topics"
+            self.index_path = wiki_dir / "domains" / domain / "index.md"
+        else:
+            # Legacy: flat structure
+            self.concepts_dir = wiki_dir / "concepts"
+            self.topics_dir = wiki_dir / "topics"
+            self.index_path = wiki_dir / "index.md"
+
         self.token_budget = token_budget
         self.model = model
 

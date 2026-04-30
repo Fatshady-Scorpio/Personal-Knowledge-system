@@ -1,0 +1,35 @@
+# Domain configuration for Personal Knowledge System
+# Domains can be added, removed, or merged at any time.
+# No code changes needed — just edit this file.
+
+domains:
+  ai:
+    name: "AI & Tech"
+    keywords: ["AI", "LLM", "ML", "技术", "编程", "算法", "模型", "深度学习", "神经网络", "Transformer", "GPT", "BERT", "推理", "训练", "NLP", "CV", "计算机视觉", "自然语言处理", "强化学习", "Agent", "智能体", "准确率", "召回率", "混淆矩阵", "伪阳", "真阳", "样本不平衡", "分布式", "存储", "接口", "异常处理", "评估", "embedding", "嵌入", "向量"]
+    tags: ["AI", "LLM", "机器学习", "深度学习", "NLP", "CV", "神经网络", "Transformer", "GPT", "算法", "模型", "AI应用", "大模型", "人工智能"]
+    enabled: true
+
+  product:
+    name: "Product & Strategy"
+    keywords: ["产品", "商业", "创业", "战略", "运营", "增长", "用户", "市场", "竞争", "变现", "商业模式", "产品设计", "用户体验", "思维", "MECE", "SMART", "系统思维", "归纳", "决策", "目标", "问题本质", "认知", "信念", "情绪", "调节回路", "舍本逐末", "框架", "方法论"]
+    tags: ["产品", "商业", "创业", "战略", "运营", "增长"]
+    enabled: true
+
+  investment:
+    name: "Investment"
+    keywords: ["投资", "财务", "市场", "股票", "基金", "估值", "回报", "风险", "资产", "配置", "收益", "财报", "IPO"]
+    tags: ["投资", "财务", "股票", "基金"]
+    enabled: true
+
+  gaming:
+    name: "Gaming"
+    keywords: ["游戏", "娱乐", "电竞", "主机", "独立游戏", "游戏设计", "玩法", "关卡"]
+    tags: ["游戏", "娱乐", "电竞"]
+    enabled: true
+
+  general:
+    name: "General"
+    keywords: []
+    tags: []
+    enabled: true
+    # catch-all domain: entries that don't match any other domain go here

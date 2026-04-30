@@ -28,11 +28,19 @@ class WikiBuilder:
         raw_processor: RawProcessor,
         wiki_dir: Path,
         model: Optional[str] = None,
+        domain: Optional[str] = None,
     ):
         self.raw_processor = raw_processor
         self.wiki_dir = wiki_dir
-        self.concepts_dir = wiki_dir / "concepts"
-        self.topics_dir = wiki_dir / "topics"
+        self.domain = domain
+
+        if domain:
+            self.concepts_dir = wiki_dir / "domains" / domain / "concepts"
+            self.topics_dir = wiki_dir / "domains" / domain / "topics"
+        else:
+            self.concepts_dir = wiki_dir / "concepts"
+            self.topics_dir = wiki_dir / "topics"
+
         self.model = model or "qwen3.6-plus"
         self.router = get_router()
 

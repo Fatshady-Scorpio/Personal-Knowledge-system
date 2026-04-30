@@ -20,13 +20,49 @@ logger = logging.getLogger(__name__)
 class IndexGenerator:
     """Generate and maintain the wiki index.md file."""
 
-    def __init__(self, wiki_dir: Path, model: Optional[str] = None):
+    def __init__(self, wiki_dir: Path, model: Optional[str] = None, domain: Optional[str] = None):
         self.wiki_dir = wiki_dir
-        self.concepts_dir = wiki_dir / "concepts"
-        self.topics_dir = wiki_dir / "topics"
-        self.index_path = wiki_dir / "index.md"
+        self.domain = domain
+
+        if domain:
+            # Domain-scoped: use domain directories
+            self.concepts_dir = wiki_dir / "domains" / domain / "concepts"
+            self.topics_dir = wiki_dir / "domains" / domain / "topics"
+            self.index_path = wiki_dir / "domains" / domain / "index.md"
+        else:
+            # Legacy: flat structure
+            self.concepts_dir = wiki_dir / "concepts"
+            self.topics_dir = wiki_dir / "topics"
+            self.index_path = wiki_dir / "index.md"
+
         self.model = model or "qwen3.6-plus"
         self.router = get_router()
+
+    def generate_for_all_domains(self) -> list[str]:
+        """Generate index.md for all domains in wiki/domains/.
+
+        Returns:
+            List of generated index paths
+        """
+        domains_dir = self.wiki_dir / "domains"
+        if not domains_dir.exists():
+            return []
+
+        paths = []
+        for domain_dir in sorted(domains_dir.iterdir()):
+            if domain_dir.is_dir() and (domain_dir / "concepts").exists():
+                gen = IndexGenerator(self.wiki_dir, self.model, domain=domain_dir.name)
+                path = gen.generate()
+                if path:
+                    paths.append(path)
+
+        # Also generate legacy flat index if old directories exist
+        if self.wiki_dir / "concepts" != self.concepts_dir:
+            legacy_gen = IndexGenerator(self.wiki_dir, self.model)
+            if legacy_gen.concepts_dir.exists():
+                legacy_gen.generate()
+
+        return paths
 
     def generate(self) -> str:
         """Generate the index.md file from existing wiki entries.
