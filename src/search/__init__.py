@@ -8,7 +8,7 @@ from .local_retriever import LocalRetriever
 from .query_router import QueryRouter, QueryIntent
 from .search_engine import SearchEngine
 from .synthesizer import Synthesizer
-from .web_search import WebResult
+from .knowledge_weaver import KnowledgeWeaver, KnowledgeValue, WeaverResult
 
 __all__ = [
     "IndexManager",
@@ -18,6 +18,10 @@ __all__ = [
     "QueryIntent",
     "SearchEngine",
     "Synthesizer",
+    "KnowledgeWeaver",
+    "KnowledgeValue",
+    "WeaverResult",
     "WebResult",
+    "DuckDuckGoSearch",
     "tokenize",
 ]

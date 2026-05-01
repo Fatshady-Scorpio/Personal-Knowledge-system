@@ -11,7 +11,7 @@ from .indexer import IndexManager
 from .local_retriever import LocalRetriever
 from .query_router import QueryRouter, QueryIntent
 from .synthesizer import Synthesizer
-from .web_search import WebResult
+from .web_search import WebResult, DuckDuckGoSearch
 from ..domain_manager import DomainManager
 
 logger = logging.getLogger(__name__)
@@ -31,13 +31,18 @@ class SearchEngine:
         wiki_root: Path,
         model: str = "qwen3.6-plus",
         domain: Optional[str] = None,
+        use_web: bool = False,
     ):
         self.wiki_root = wiki_root
         self.domain = domain
+        self.use_web = use_web
         self.domain_manager = DomainManager()
         self.index_manager = IndexManager(wiki_root)
         self.query_router = QueryRouter(self.domain_manager)
         self.synthesizer = Synthesizer(model=model)
+
+        # DuckDuckGo fallback (works with VPN)
+        self.ddg = DuckDuckGoSearch() if use_web else None
 
     def search(
         self,
@@ -84,11 +89,19 @@ class SearchEngine:
         # Step 4: Synthesize answer (hybrid: wiki + web if needed)
         answer = ""
         if synthesize:
+            # Auto-trigger web search if wiki is thin and web is enabled
+            effective_web = web_results
+            if not effective_web and self.use_web and self.ddg:
+                bm25_count = sum(1 for r in results if r["source"] == "bm25")
+                if bm25_count < 3:
+                    logger.info("Auto-triggering DuckDuckGo (thin wiki results)")
+                    effective_web = self.ddg.search(query)
+
             domain_name = self.domain_manager.get_domain(intent.primary_domain)
             answer = self.synthesizer.synthesize_hybrid(
                 query=query,
                 wiki_results=results,
-                web_results=web_results,
+                web_results=effective_web,
                 domain_name=domain_name.name if domain_name else intent.primary_domain,
             )
 

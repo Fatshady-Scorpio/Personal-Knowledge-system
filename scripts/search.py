@@ -171,6 +171,11 @@ Examples:
         help="Generate LLM answer from results",
     )
     parser.add_argument(
+        "--web",
+        action="store_true",
+        help="Enable DuckDuckGo fallback (requires VPN)",
+    )
+    parser.add_argument(
         "--domain",
         type=str,
         help="Search in specific domain",
@@ -201,6 +206,7 @@ Examples:
         wiki_root=WIKI_ROOT,
         model=args.model,
         domain=args.domain,
+        use_web=args.web,
     )
 
     if args.build:
