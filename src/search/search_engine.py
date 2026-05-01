@@ -11,6 +11,7 @@ from .indexer import IndexManager
 from .local_retriever import LocalRetriever
 from .query_router import QueryRouter, QueryIntent
 from .synthesizer import Synthesizer
+from .web_search import WebResult
 from ..domain_manager import DomainManager
 
 logger = logging.getLogger(__name__)
@@ -22,7 +23,7 @@ class SearchEngine:
     Pipeline:
     1. Route query → determine target domain(s)
     2. Retrieve entries → BM25 + link expansion
-    3. Synthesize answer → LLM generates response
+    3. Synthesize answer → LLM generates (wiki-only or wiki+web hybrid)
     """
 
     def __init__(
@@ -38,18 +39,25 @@ class SearchEngine:
         self.query_router = QueryRouter(self.domain_manager)
         self.synthesizer = Synthesizer(model=model)
 
-    def search(self, query: str, synthesize: bool = True) -> dict:
+    def search(
+        self,
+        query: str,
+        synthesize: bool = True,
+        web_results: Optional[list[WebResult]] = None,
+    ) -> dict:
         """Perform a wiki search.
 
         Args:
             query: User query
             synthesize: Whether to generate an LLM answer
+            web_results: Optional web search results (injected by CLI/Agent)
 
         Returns:
             Dictionary with:
             - intent: QueryIntent (domain routing)
             - results: List of retrieved entries
             - answer: Synthesized answer (if synthesize=True)
+            - entry_count: Number of wiki entries retrieved
         """
         # Step 1: Route query
         intent = self.query_router.route(query)
@@ -73,13 +81,14 @@ class SearchEngine:
                 sec_results = sec_retriever.retrieve(query, top_k=3)
                 results.extend(sec_results)
 
-        # Step 4: Synthesize answer
+        # Step 4: Synthesize answer (hybrid: wiki + web if needed)
         answer = ""
-        if synthesize and results:
+        if synthesize:
             domain_name = self.domain_manager.get_domain(intent.primary_domain)
-            answer = self.synthesizer.synthesize_local(
+            answer = self.synthesizer.synthesize_hybrid(
                 query=query,
-                results=results,
+                wiki_results=results,
+                web_results=web_results,
                 domain_name=domain_name.name if domain_name else intent.primary_domain,
             )
 

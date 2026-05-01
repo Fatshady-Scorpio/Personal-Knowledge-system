@@ -8,6 +8,7 @@ from .local_retriever import LocalRetriever
 from .query_router import QueryRouter, QueryIntent
 from .search_engine import SearchEngine
 from .synthesizer import Synthesizer
+from .web_search import WebResult
 
 __all__ = [
     "IndexManager",
@@ -17,5 +18,6 @@ __all__ = [
     "QueryIntent",
     "SearchEngine",
     "Synthesizer",
+    "WebResult",
     "tokenize",
 ]
