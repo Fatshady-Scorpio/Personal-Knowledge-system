@@ -1,396 +1,138 @@
-# Agentic Wiki 使用指南
+# Agentic Wiki Guide
 
-## 快速开始（5 分钟上手）
+## Mental Model
 
-### 第一步：创建你的第一篇 Raw 材料
+This project is no longer a legacy `raw/ -> concepts/` compiler. It is Sam's local LLM-maintained Obsidian wiki.
 
-1. 在 `raw/articles/` 目录下创建一个新的 markdown 文件：
+The operating loop is:
+
+```text
+capture source -> write immutable source -> compile durable knowledge -> weave links/maps -> index -> retrieve for work -> save good answers back
+```
+
+## Canonical Paths
+
+- Vault: `/Users/samcao/Obsidian/wiki`
+- Project: `/Users/samcao/Documents/Documents/personal_projects/Personal Knowledge system/.worktrees/knowledge-v2-refactor`
+- Config: `config/vault.yaml`
+- Source layer: `10_sources`
+- Knowledge layer: `20_knowledge`
+- System indexes: `_system/indexes`
+
+## Ingest A Source
+
+Create a JSON payload:
+
+```json
+{
+  "source_id": "manual_2026_06_26_ai_agents_note",
+  "title": "Agent 记忆分层笔记",
+  "body": "# Agent 记忆分层笔记\n\n长期知识应该进入 Obsidian，短期任务状态可以留在任务系统。",
+  "source_type": "work_note",
+  "domain_hint": "ai_agents",
+  "tags": ["agent", "memory"],
+  "source_url": ""
+}
+```
+
+Run:
 
 ```bash
-# 方式 1：手动创建
-cat > raw/articles/20260407_我的第一篇笔记.md << 'EOF'
----
-type: note
-title: 我的第一篇笔记
-collected_at: 2026-04-07
-tags: [测试，入门]
-status: raw
----
-
-# 我的第一篇笔记
-
-这是我对某个主题的理解和思考。
-
-## 核心观点
-
-1. 观点一
-2. 观点二
-3. 观点三
-
----
-
-## 我的思考
-
-我觉得这个主题很有意思，因为...
-EOF
+cd "/Users/samcao/Documents/Documents/personal_projects/Personal Knowledge system/.worktrees/knowledge-v2-refactor"
+PYTHONPATH=src python scripts/ingest_source.py --payload /path/to/payload.json --config config/vault.yaml
 ```
+
+Expected result:
+
+- a Markdown source under `/Users/samcao/Obsidian/wiki/10_sources/**`
+- a content hash in frontmatter
+- duplicate-safe behavior for identical content
+
+## Compile A Source
+
+Use a real source path returned by ingest:
 
 ```bash
-# 方式 2：使用 Python 创建
-PYTHONPATH=. python << 'EOF'
-from src.compiler.raw_processor import RawProcessor
-from pathlib import Path
-
-processor = RawProcessor(Path("raw"))
-processor.create(
-    title="我的第一篇笔记",
-    content="这是我对某个主题的理解和思考。",
-    raw_type="note",
-    tags=["测试", "入门"],
-    user_notes="我觉得这个主题很有意思，因为..."
-)
-EOF
+cd "/Users/samcao/Documents/Documents/personal_projects/Personal Knowledge system/.worktrees/knowledge-v2-refactor"
+PYTHONPATH=src python scripts/compile_source.py \
+  --source "/Users/samcao/Obsidian/wiki/10_sources/work_notes/example.md" \
+  --config config/vault.yaml
 ```
 
-### 第二步：编译为 Wiki 词条
+Expected result:
+
+- useful durable pages under `20_knowledge/domains/{domain}/**`
+- `source_refs` back to the source
+- generated entries marked `candidate`
+- source status moved toward `compiled`
+
+## Build Or Search Indexes
+
+Build all domain indexes:
 
 ```bash
-PYTHONPATH=. python scripts/compile_raw.py --all --verbose
+cd "/Users/samcao/Documents/Documents/personal_projects/Personal Knowledge system/.worktrees/knowledge-v2-refactor"
+PYTHONPATH=src python scripts/search_v2.py --build --config config/vault.yaml
 ```
 
-执行后，你会在 `wiki/concepts/` 目录下看到生成的词条文件。
-
-### 第三步：查看生成的 Wiki
+Search a domain:
 
 ```bash
-# 查看生成的词条
-ls -la wiki/concepts/
-
-# 查看索引文件
-cat wiki/index.md
-
-# 或用 Obsidian 打开
-open wiki/
+cd "/Users/samcao/Documents/Documents/personal_projects/Personal Knowledge system/.worktrees/knowledge-v2-refactor"
+PYTHONPATH=src python scripts/search_v2.py Agent 记忆 --domain ai_agents --top-k 5 --config config/vault.yaml
 ```
 
-### 第四步：查询知识库
+Expected result:
 
-```bash
-# 交互式查询
-PYTHONPATH=. python scripts/query_wiki.py --interactive
-```
+- search reads per-domain indexes from `_system/indexes`
+- output paths point to `20_knowledge/domains/ai_agents/**`
 
----
+## Command Center Deposit Flow
 
-## 日常工作流
+The preferred production path is not manual CLI use.
 
-### 场景 1：阅读到好文章
+1. Research or secretary agent creates/finishes work.
+2. Sam chooses `沉淀到知识库` or the task policy requests deposit.
+3. Command Center creates `knowledge_deposit`.
+4. Local Knowledge Runner calls `scripts/ingest_source.py`.
+5. Local Knowledge Runner calls `scripts/compile_source.py`.
+6. Local Knowledge Runner calls `scripts/search_v2.py --build`.
+7. Deposit report returns created, updated, skipped, and review-required pages.
 
-```
-1. 阅读文章 → 2. 保存为 Raw → 3. 积累几篇后编译 → 4. 查询时复用
-```
+## Daily Operating Rules
 
-**具体操作**：
+- Research is only one knowledge source. Manual notes, conversations, and project learnings use the same deposit path.
+- Good answers should be promoted into knowledge when they contain reusable synthesis.
+- Ambiguous user requests should trigger a clarification question rather than guessing.
+- `candidate` pages can be used but must be marked as candidate in high-impact context.
+- Stable knowledge should cite source files or explicitly state that it is Sam's synthesis.
 
-```bash
-# 1. 保存文章（手动创建 markdown）
-cat > raw/articles/20260407_LLM 推理优化.md << 'EOF'
----
-type: article
-source: https://example.com/llm-inference
-collected_at: 2026-04-07
-tags: [LLM, 推理优化]
-status: raw
----
+## Maintenance Cadence
 
-# LLM 推理优化技术总结
+Per ingest:
 
-## 主要内容
+- write source
+- compile source
+- update touched maps
+- rebuild affected indexes
+- append operation report
 
-文章介绍了以下几种优化技术：
+Daily:
 
-1. **量化**：FP16/INT8/FP8 量化
-2. **注意力优化**：PagedAttention、FlashAttention
-3. **批处理**：Continuous Batching
+- triage `00_inbox`
+- list uncompiled sources
+- check recently touched maps
 
-## 关键数据
+Weekly:
 
-- INT8 量化可减少 50% 显存
-- PagedAttention 提升 24 倍吞吐
+- detect duplicate concepts
+- detect orphan pages
+- find stale or low-confidence knowledge
+- report sources that never compiled
 
----
+Monthly:
 
-## 我的思考
-
-这篇文章的量化部分讲得很清楚，但缺少实际代码示例。
-我觉得可以结合 vLLM 的源码来理解。
-EOF
-
-# 2. 编译（可以积累几篇后一起编译）
-PYTHONPATH=. python scripts/compile_raw.py --all
-
-# 3. 之后查询时会自动使用这些知识
-PYTHONPATH=. python scripts/query_wiki.py "LLM 推理优化有哪些技术？"
-```
-
-### 场景 2：观看视频后记录
-
-```bash
-# 保存视频笔记
-PYTHONPATH=. python << 'EOF'
-from src.compiler.raw_processor import RawProcessor
-from pathlib import Path
-
-processor = RawProcessor(Path("raw"))
-processor.create(
-    title="Karpathy Agentic Wiki 视频笔记",
-    content="""
-视频核心内容：
-
-1. LLM Wiki 的三层结构：raw/ → wiki/ → outputs/
-2. 双向链接的重要性
-3. 知识复利的概念
-
-关键引用：
-- "RAG 是无状态的阅览室"
-- "Wiki 是有状态的知识库"
-""",
-    raw_type="video",
-    source="https://youtube.com/watch?v=xxx",
-    tags=["知识管理", "LLM"],
-    user_notes="""
-这个理念和我之前的 RAG 思路完全不同，需要重新设计整个系统。
-特别是 index.md 作为导航入口的设计很巧妙。
-"""
-)
-EOF
-
-# 编译
-PYTHONPATH=. python scripts/compile_raw.py --all
-```
-
-### 场景 3：深度研究一个主题
-
-```bash
-# 启动交互式查询
-PYTHONPATH=. python scripts/query_wiki.py --interactive
-
-# 然后连续追问：
-# ❓ 请问：什么是 LLM 推理优化？
-# ❓ 请问：有哪些主流框架？
-# ❓ 请问：vLLM 和 TGI 的区别？
-
-# 查询结果会自动保存到 outputs/qa/
-```
-
----
-
-## 高级用法
-
-### 1. 批量导入现有笔记
-
-如果你有现有的 markdown 笔记：
-
-```bash
-# 1. 复制到 raw 目录
-cp ~/notes/*.md raw/articles/
-
-# 2. 批量添加 frontmatter（如果需要）
-PYTHONPATH=. python << 'EOF'
-from pathlib import Path
-
-for md_file in Path("raw/articles").glob("*.md"):
-    content = md_file.read_text()
-    if not content.startswith("---"):
-        # 添加 frontmatter
-        frontmatter = """---
-type: article
-status: raw
-tags: []
----
-
-"""
-        md_file.write_text(frontmatter + content)
-EOF
-
-# 3. 编译
-PYTHONPATH=. python scripts/compile_raw.py --all
-```
-
-### 2. 自定义编译参数
-
-```python
-from src.compiler.wiki_builder import WikiBuilder
-from src.compiler.raw_processor import RawProcessor
-from pathlib import Path
-
-processor = RawProcessor(Path("raw"))
-builder = WikiBuilder(processor, Path("wiki"), model="qwen3.5-plus")
-
-# 自定义模型参数
-# 在 wiki_builder.py 中修改 call 参数
-```
-
-### 3. 定期健康检查
-
-**手动运行**
-```bash
-# 每周运行一次
-PYTHONPATH=. python scripts/health_check.py --output reports/health_$(date +%Y-%m-%d).md
-```
-
-**月度自动健康检查**（推荐）
-
-启动月度健康检查调度器，每月 1 号上午 9:00 自动执行：
-
-```bash
-# 启动调度器（后台运行）
-PYTHONPATH=. python scripts/start_monthly_health_check.py
-
-# 仅运行一次
-PYTHONPATH=. python scripts/start_monthly_health_check.py --run-once
-
-# macOS 开机自启
-bash deploy/setup_monthly_health_check.sh
-```
-
-健康检查项目：
-1. 断裂链接 ([[link]] 指向不存在的词条)
-2. 孤岛词条 (无双向链接的词条)
-3. 潜在矛盾 (语义冲突)
-4. 缺少来源 (无引用的断言)
-5. 过期内容 (>90 天未更新)
-6. 幻觉风险 (低置信度/模糊来源)
-
----
-
-## 故障排除
-
-### 问题 1：编译后没有生成词条
-
-**可能原因**：
-- Raw 材料格式不正确
-- LLM API 调用失败
-- 内容为空或太短
-
-**解决方法**：
-```bash
-# 检查 Raw 材料格式
-cat raw/articles/你的文件.md
-
-# 确认有 frontmatter
-head -10 raw/articles/你的文件.md
-
-# 查看详细日志
-PYTHONPATH=. python scripts/compile_raw.py --file 你的文件.md --verbose
-```
-
-### 问题 2：查询结果不准确
-
-**可能原因**：
-- Wiki 词条太少
-- index.md 索引不完整
-- 问题太模糊
-
-**解决方法**：
-```bash
-# 1. 编译更多 Raw 材料
-PYTHONPATH=. python scripts/compile_raw.py --all
-
-# 2. 重新生成索引
-PYTHONPATH=. python scripts/compile_raw.py --regenerate
-
-# 3. 尝试更具体的问题
-# ❌ "什么是 AI？"（太宽泛）
-# ✅ "Transformer 的注意力机制是什么？"（具体）
-```
-
-### 问题 3：Token 预算超限
-
-**症状**：`Token budget reached`
-
-**解决方法**：
-```yaml
-# 编辑 config/wiki_config.yaml
-context:
-  query_budget: 150000  # 增加预算
-```
-
----
-
-## 最佳实践检查清单
-
-### Raw 材料质量
-
-- [ ] 包含明确的来源 URL
-- [ ] 有自己的思考和笔记
-- [ ] 标签准确描述主题
-- [ ] 内容长度适中（1000-5000 字）
-- [ ] frontmatter 格式正确
-
-### 编译流程
-
-- [ ] 积累 5-10 篇后批量编译
-- [ ] 编译后检查生成的词条
-- [ ] 定期重新生成 index.md
-- [ ] 关注低置信度（<0.7）的词条
-
-### 查询优化
-
-- [ ] 问题具体明确
-- [ ] 使用索引中的主题名称
-- [ ] 复杂主题使用连续追问
-- [ ] 保存高价值 Q&A
-
-### 知识维护
-
-- [ ] 每周运行健康检查
-- [ ] 修复断裂链接
-- [ ] 处理孤岛词条
-- [ ] 审核潜在矛盾
-
----
-
-## 示例：完整的知识积累循环
-
-```
-第 1 天：阅读文章
-├─ 保存为 raw/articles/20260401_RAG 技术.md
-└─ 添加个人思考
-
-第 2 天：观看视频
-├─ 保存为 raw/articles/20260402_LLM 应用.md
-└─ 添加个人思考
-
-第 3 天：阅读论文
-├─ 保存为 raw/articles/20260403_Attention.md
-└─ 添加个人思考
-
-第 7 天：批量编译（积累了 7 篇）
-├─ PYTHONPATH=. python scripts/compile_raw.py --all
-├─ 生成 ~20 个 Wiki 词条
-└─ 更新 index.md
-
-第 14 天：深度查询
-├─ python scripts/query_wiki.py --interactive
-├─ 追问 5 个相关问题
-└─ 保存到 outputs/qa/
-
-第 30 天：健康检查
-├─ python scripts/health_check.py
-├─ 修复 2 个断裂链接
-└─ 合并 1 个矛盾
-```
-
----
-
-## 下一步
-
-- [ ] 创建你的第一篇 Raw 材料
-- [ ] 运行第一次编译
-- [ ] 尝试查询知识库
-- [ ] 阅读 [CLAUDE.md](../CLAUDE.md) 了解更多
-
----
-
-*最后更新：2026-04-07*
+- review domain maps
+- promote stable principles/cases
+- archive inactive project notes
+- update public-account backlog

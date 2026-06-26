@@ -1,125 +1,98 @@
-# Obsidian Wiki 目录结构
+# Obsidian Wiki Structure
 
-**最后更新**: 2026-04-08
+**Last updated:** 2026-06-26
 
-## 目录结构
+## Canonical Vault
 
-```
-/Users/samcao/Obsidian/wiki/          # Obsidian 知识库主目录（实际存储）
-├── index.md                          # 知识库导航索引
-├── concepts/                         # 概念词条（双向链接节点）
-│   ├── Transformer.md
-│   ├── 大语言模型.md
-│   └── ...
-└── topics/                           # 主题 MOC（Map of Content）
-    └── ...
+`/Users/samcao/Obsidian/wiki`
 
-/Users/samcao/Documents/trae_projects/Personal Knowledge system/
-├── raw/                              # 原始材料（待编译）
+This is the active personal knowledge base. It is not a generated preview folder and it should not depend on legacy project directories.
+
+## Directory Structure
+
+```text
+/Users/samcao/Obsidian/wiki/
+├── 00_inbox/
+├── 10_sources/
 │   ├── articles/
-│   ├── videos/
 │   ├── papers/
-│   └── notes/
-├── wiki/                             # 符号链接 → /Users/samcao/Obsidian/wiki
-├── src/                              # 编译源代码
-├── scripts/                          # 执行脚本
-├── docs/                             # 项目文档
-└── config/                           # 配置文件
+│   ├── books/
+│   ├── videos/
+│   ├── conversations/
+│   ├── research_reports/
+│   ├── work_notes/
+│   └── clippings/
+├── 20_knowledge/
+│   ├── domains/
+│   │   ├── ai_agents/
+│   │   ├── product_growth/
+│   │   ├── business_investment/
+│   │   ├── personal_systems/
+│   │   ├── engineering/
+│   │   └── content_creation/
+│   ├── people_orgs/
+│   └── glossary/
+├── 30_projects/
+├── 40_outputs/
+├── 50_maps/
+├── 90_archive/
+└── _system/
+    ├── indexes/
+    ├── manifests/
+    ├── migrations/
+    ├── templates/
+    └── reports/
 ```
 
-## 设计说明
+## Separation Of Concerns
 
-### 为什么分离？
+Obsidian vault:
 
-1. **Obsidian Wiki 目录** - 只存储实际的知识内容
-   - `concepts/` - 概念词条
-   - `topics/` - 主题索引
-   - `index.md` - 导航目录
+- stores sources, knowledge, projects, outputs, maps, and machine indexes.
+- is the source of truth.
+- is readable and editable by Sam.
 
-2. **项目目录** - 存储工具和配置
-   - 编译脚本
-   - 自动调度器
-   - 配置文档
-   - Raw 材料
+Personal Knowledge project:
 
-### 符号链接的作用
+- stores Python code, tests, configuration, and docs.
+- ingests sources into the vault.
+- compiles sources into maintained knowledge pages.
+- builds indexes and context packs.
+- runs maintenance checks.
 
-`/Users/samcao/Documents/trae_projects/Personal Knowledge system/wiki` 
-是一个符号链接，实际指向 `/Users/samcao/Obsidian/wiki/`
+Command Center:
 
-这样设计的好处：
-- ✅ Obsidian 打开的是纯净的知识库，没有代码文件
-- ✅ 编译脚本可以通过符号链接写入 wiki
-- ✅ 两个目录解耦，各司其职
+- creates and tracks tasks.
+- invokes the local runner for local vault writes.
+- displays review cards and deposit reports.
 
-## 使用流程
+## No Legacy Dependency
 
-```
-1. 浏览网页 → 用 Web Clipper 剪藏到 raw/articles/
-2. 添加 frontmatter: ---
-                      type: article
-                      ---
-3. 自动编译调度器检测 → 编译成 Wiki 词条 → 写入 /Users/samcao/Obsidian/wiki/
-4. Obsidian 自动刷新 → 查看新生成的词条
-```
+The old project layout used paths such as `raw/`, `wiki/concepts/`, and project-local `knowledge/**`. Those paths are historical only.
 
-## 命令参考
+New code and documentation should target the v2 vault:
+
+- sources: `/Users/samcao/Obsidian/wiki/10_sources`
+- knowledge: `/Users/samcao/Obsidian/wiki/20_knowledge`
+- outputs: `/Users/samcao/Obsidian/wiki/40_outputs`
+- indexes: `/Users/samcao/Obsidian/wiki/_system/indexes`
+
+## Common Commands
 
 ```bash
-# 编译所有待处理的 Raw 材料
-PYTHONPATH=. python scripts/start_auto_compile.py --run-once
-
-# 启动自动编译调度器
-PYTHONPATH=. python scripts/start_auto_compile.py
-
-# 查看 Raw 目录待编译文件数量
-ls raw/articles/*.md | wc -l
-
-# 查看 Wiki 词条数量
-ls /Users/samcao/Obsidian/wiki/concepts/*.md | wc -l
+cd "/Users/samcao/Documents/Documents/personal_projects/Personal Knowledge system/.worktrees/knowledge-v2-refactor"
+PYTHONPATH=src python scripts/search_v2.py --build --config config/vault.yaml
+PYTHONPATH=src python scripts/search_v2.py Agent 记忆 --domain ai_agents --top-k 5 --config config/vault.yaml
+PYTHONPATH=src pytest tests/unit -q
 ```
 
-## Raw 材料格式
+## Review Expectations
 
-**最简格式**（推荐 Web Clipper 用户）：
-```markdown
----
-type: article
----
+After an automated ingest or maintenance pass, Sam should be able to inspect:
 
-[剪藏内容]
-```
-
-**完整格式**：
-```markdown
----
-type: article
-source: https://example.com
-collected_at: 2026-04-08
-tags: [LLM, RAG]
-status: raw
----
-
-# 文章标题
-
-[内容]
-
----
-
-## 我的思考
-
-[你的笔记]
-```
-
-## 批量修复工具
-
-如果你用 Web Clipper 剪藏了很多内容，运行：
-
-```bash
-cd /Users/samcao/Documents/trae_projects/Personal\ Knowledge\ system
-PYTHONPATH=. python scripts/fix_webclipper_import.py
-```
-
----
-
-*此文档解释 Obsidian Wiki 目录结构的设计理念*
+- source file path
+- created knowledge pages
+- updated knowledge pages
+- skipped duplicate sources
+- candidate pages needing review
+- affected indexes

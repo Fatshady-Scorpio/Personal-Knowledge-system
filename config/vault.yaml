@@ -1,0 +1,27 @@
+current_vault: /Users/samcao/Obsidian/wiki
+staging_vault: /Users/samcao/Obsidian/wiki-v2-staging
+project_root: /Users/samcao/Documents/Documents/personal_projects/Personal Knowledge system
+
+domains:
+  ai: ai_agents
+  product: product_growth
+  investment: business_investment
+  general: personal_systems
+
+source_mappings:
+  raw/articles: 10_sources/articles
+  raw/papers: 10_sources/papers
+  raw/videos: 10_sources/videos
+  raw/notes: 10_sources/work_notes
+  raw/qa: 10_sources/conversations
+  Clippings: 10_sources/clippings
+  reports: 40_outputs/research_reports
+
+knowledge_mappings:
+  concepts: concepts
+  topics: maps
+
+ignored_dirs:
+  - .obsidian
+  - .trash
+  - _system/indexes
